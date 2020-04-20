@@ -1,6 +1,5 @@
 <?php
 
-
 Trait ModelTrait
 {
     public static $app;
@@ -175,7 +174,7 @@ Trait ModelTrait
         return $data;
     }
 
-    public function toModelData($key)
+    public function toModelData($key, $ids)
     {
         $this->doSelect();
 
@@ -185,10 +184,15 @@ Trait ModelTrait
             $data[$orm->$key] = $orm;
         }
 
+        foreach ($ids as $id) {
+            if (isset($data[$id])) continue;
+            $data[$id] = (new $this)->setOrm($this->orm);
+        }
+
         return $data;
     }
 
-    public function toModelDatas($key)
+    public function toModelDatas($key, $ids)
     {
         $this->doSelect();
 
@@ -196,6 +200,11 @@ Trait ModelTrait
 
         foreach ($this->orm as $orm) {
             $data[$orm->$key][] = $orm;
+        }
+
+        foreach ($ids as $id) {
+            if (isset($data[$id])) continue;
+            $data[$id][] = (new $this)->setOrm($this->orm);
         }
 
         return $data;
@@ -212,7 +221,7 @@ Trait ModelTrait
             if (!$ids = array_filter($this->toData($field))) return [];
             $relation = (new $model)->where([$modelField => ['in', $ids]]);
             $func && $func($relation);
-            return $relation->toModelData($modelField);
+            return $relation->toModelData($modelField, $ids);
         });
 
         if (!isset($data[$this->$field])) return new $model;
@@ -226,13 +235,12 @@ Trait ModelTrait
             if (!$ids = array_filter($this->toData($field))) return [];
             $relation = (new $model)->where([$modelField => ['in', $ids]]);
             $func && $func($relation);
-            return $relation->toModelDatas($modelField);
+            return $relation->toModelDatas($modelField, $ids);
         });
 
         if (!isset($data[$this->$field])) return new $model;
 
         return (new $model)->setOrm($data[$this->$field]);
     }
-
 
 }
