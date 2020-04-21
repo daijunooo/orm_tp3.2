@@ -47,7 +47,8 @@ Trait ModelTrait
 
     private function _after_sql_fetch(&$result, $options)
     {
-        $model = (new static(self::$app))->data($result);
+        $model = clone $this;
+        $model = $model->data($result);
         $this->orm[] = $model;
         $model->setOrm($this->orm);
     }
@@ -186,7 +187,7 @@ Trait ModelTrait
 
         foreach ($ids as $id) {
             if (isset($data[$id])) continue;
-            $data[$id] = (new $this)->setOrm($this->orm);
+            $data[$id] = clone $this;
         }
 
         return $data;
@@ -204,7 +205,7 @@ Trait ModelTrait
 
         foreach ($ids as $id) {
             if (isset($data[$id])) continue;
-            $data[$id][] = (new $this)->setOrm($this->orm);
+            $data[$id][] = clone $this;
         }
 
         return $data;
