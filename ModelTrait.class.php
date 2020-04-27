@@ -1,5 +1,10 @@
 <?php
 
+namespace Manager\Traits;
+
+
+use Common\Util\Think\Page;
+
 Trait ModelTrait
 {
     public static $app;
@@ -62,26 +67,49 @@ Trait ModelTrait
 
     protected function _after_find(&$result, $options)
     {
+        $this->_after_find_($result, $options);
+    }
+
+    protected function _after_find_(&$result, $options)
+    {
+        $this->orm = [];
         $this->_after_sql_fetch($result, $options);
-    }
-
-    protected function _after_insert(&$data, $options)
-    {
-        $this->_after_sql_exec($data, $options);
-    }
-
-    protected function _after_update(&$data, $options)
-    {
-        $this->_after_sql_exec($data, $options);
     }
 
     protected function _after_select(&$results, $options)
     {
+        $this->_after_select_($results, $options);
+    }
+
+    protected function _after_select_(&$results, $options)
+    {
         if (!$results) return;
+
+        $this->orm = [];
 
         foreach ($results as $result) {
             $this->_after_sql_fetch($result, $options);
         }
+    }
+
+    protected function _after_insert(&$data, $options)
+    {
+        $this->_after_insert_($data, $options);
+    }
+
+    protected function _after_update(&$data, $options)
+    {
+        $this->_after_update_($data, $options);
+    }
+
+    protected function _after_insert_(&$result, $options)
+    {
+        $this->_after_sql_exec($result, $options);
+    }
+
+    protected function _after_update_(&$result, $options)
+    {
+        $this->_after_sql_exec($result, $options);
     }
 
     public function setOrm(&$orm)
@@ -242,6 +270,33 @@ Trait ModelTrait
         if (!isset($data[$this->$field])) return new $model;
 
         return (new $model)->setOrm($data[$this->$field]);
+    }
+
+    public function lists($map = [])
+    {
+        $p = !empty($_GET["p"]) ? $_GET['p'] : 1;
+
+        return $this->where($map)
+            ->page($p, C('ADMIN_PAGE_ROWS'))
+            ->order('id desc')
+            ->autoData();
+    }
+
+    public function pages($map = [])
+    {
+        return new Page($this->where($map)->count(), C('ADMIN_PAGE_ROWS'));
+    }
+
+    public function addOne($data = '')
+    {
+        $this->create($data) || E($this->error);
+        $this->add() || E('新增失败');
+    }
+
+    public function edit()
+    {
+        $this->create() || E($this->error);
+        $this->save() || E('编辑失败');
     }
 
 }
